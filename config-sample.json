@@ -1,0 +1,15 @@
+{
+  "prefix": "!",
+  "token": "discord.token.abc123",
+  "client_key": "trello_developer_key",
+  "client_token": "trello_developer_token",
+  "primaryGuild": "discord_guild-name",
+  "primaryChannel": "discord_channel-name",
+  "keywordTopicList": "trello-list-name",
+  "ignoreSupportLists": [
+    "trello-list-name-alt",
+    "trello-list-name-test"
+  ],
+  "faqBoard": "trello-faq-board-id",
+  "faqOrganization": "trello-faq-org-id"
+}

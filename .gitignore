@@ -1,0 +1,28 @@
+# See https://help.github.com/ignore-files/ for more about ignoring files.
+
+# compiled output
+/dist
+/tmp
+config.json
+
+# db
+db/*
+
+# configs
+config/development.json
+config/production.json
+
+# dependencies
+/node_modules
+/bower_components
+
+# misc
+.DS_STORE
+!.gitkeep
+/.sass-cache
+/connect.lock
+/coverage/*
+/libpeerconnection.log
+npm-debug.log*
+yarn-error.log
+testem.log
