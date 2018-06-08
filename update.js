@@ -13,9 +13,6 @@ let debug = require('debug')('helpbot:webhook');
 const config    = require('./config.json');
 const eventEmit = new EventEmitter();
 
-// process.env.CLIENT_KEY    = '38e0911c53420ec99717316ba542450f';
-// process.env.CLIENT_TOKEN  = 'd4ed71568218ac7cd4e17d387f5ec79e75449b4fe537be47452fd694a46e32f5';
-
 const IgnoreLists = [
   'aim',
   'to be sorted'
@@ -178,6 +175,7 @@ let UpdateSupportLists = (Db) => {
   };
 
   debug('updateSupportLists');
+
   const TrelloClient = new Trello.Client({
     client_key: config['client_key'],
     client_token: config['client_token']

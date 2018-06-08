@@ -504,6 +504,21 @@ Client.on("message", async message => {
       message.channel.send(createEmbedTopList(cards.slice(0, 3)));
     });
   }
+  else if (command === 'purge') {
+    Update.updateSupportLists(Level)
+    .then(status => {
+      setTimeout(() => {
+        Update.updateSupportCards(Level)
+        .then(u => {
+          setTimeout(() => {
+            buildSupportLists();
+          }, 3000);
+        })
+        .catch(err => console.log(err));
+      }, 3000);
+    })
+    .catch(err => console.log(err));
+  }
   else {
     let primaryQuestion = supportTopics.find(topic => topic.question.toLowerCase() === command.toLowerCase());
     if (primaryQuestion) {

@@ -18,7 +18,7 @@ class WebhookServer {
   constructor() {
     this.app    = null;
     this.server = null;
-    this.port   = this.normalizePort(process.env.PORT || '5000');
+    this.port   = this.normalizePort(process.env.PORT || '3000');
   }
 
   init() {
@@ -33,6 +33,7 @@ class WebhookServer {
       next();
     });
 
+    this.app.get('/', this.handleSuccess);
     this.app.get('/ping', this.handleSuccess);
     this.app.post('/ping', this.handleWebhook);
 
