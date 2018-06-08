@@ -567,3 +567,19 @@ Webhook.eventEmit.on('WEBHOOK_UPDATE', () => {
 Webhook.eventEmit.on('error', (err) => {
   console.error('[Webhook :: Event] Error encountered', err);
 });
+
+function handleErrorOrSignal(err) {
+  if (err) {
+    console.error('Error occurred:', err);
+    console.error(err.stack);
+  }
+  if (! closing) {
+    console.log('Shutting down server...');
+    process.exit(1);
+  }
+}
+
+process.on('SIGTERM', handleErrorOrSignal)
+       .on('SIGINT', handleErrorOrSignal)
+       .on('SIGHUP', handleErrorOrSignal)
+       .on('uncaughtException', handleErrorOrSignal);
