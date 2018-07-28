@@ -1,15 +1,35 @@
 {
-  "prefix": "!",
-  "token": "discord.token.abc123",
-  "client_key": "trello_developer_key",
-  "client_token": "trello_developer_token",
-  "primaryGuild": "discord_guild-name",
-  "primaryChannel": "discord_channel-name",
-  "keywordTopicList": "trello-list-name",
+  "prefix": "?",
+  
+  "trelloWebhookPort": 3000,
+
+  "primaryGuild": "YOUR_GUILD_NAME",
+
+  "primaryChannelMatch": "support",
+
+  "keywordTopicList": "primary topics",
+
   "ignoreSupportLists": [
-    "trello-list-name-alt",
-    "trello-list-name-test"
+    "aim",
+    "to be sorted",
+    "primary questions"
   ],
-  "faqBoard": "trello-faq-board-id",
-  "faqOrganization": "trello-faq-org-id"
+
+  "admin": "YOUR_DISCORD_ID",
+
+  "integrations": {
+    "trello": {
+      "api": {
+        "key": "YOUR_TRELLO_KEY",
+        "token": "YOUR_TRELLO_TOKEN"
+      },
+      "organization": "YOUR_TRELLO_FAQ_ORGANIZATION_ID",
+      "board": "YOUR_TRELLO_FAQ_BOARD_ID"
+    },
+    
+    "discord": {
+      "token": "YOUR_DISCORD_BOT_TOKEN",
+      "webhook": ""
+    }
+  }
 }

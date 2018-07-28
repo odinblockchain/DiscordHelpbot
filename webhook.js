@@ -5,6 +5,8 @@ const express       = require('express');
 const bodyParser    = require('body-parser');
 const Update        = require('./update');
 const EventEmitter  = require('events');
+const logger        = require('morgan');
+const config        = require('./config.json');
 
 /*  Debug
 */
@@ -18,7 +20,7 @@ class WebhookServer {
   constructor() {
     this.app    = null;
     this.server = null;
-    this.port   = this.normalizePort(process.env.PORT || '3000');
+    this.port   = this.normalizePort(process.env.PORT || config['trelloWebhookPort']);
   }
 
   init() {
@@ -33,12 +35,17 @@ class WebhookServer {
       next();
     });
 
+    this.app.use(logger(':status :method :url :res[content-length] - :response-time ms'));
+
+    this.app.set('port', this.port);
+
     this.app.get('/', this.handleSuccess);
     this.app.get('/ping', this.handleSuccess);
     this.app.post('/ping', this.handleWebhook);
 
     this.app.use((err, req, res, next) => {
-      console.log('\n[Webhook] Encountered Error', err, '\n\n');
+      debug('Error Encountered')
+      console.log(err)
       res.status(err.status || 501);
       res.json({
         status: 'error',
@@ -46,8 +53,6 @@ class WebhookServer {
         error: err
       });
     });
-
-    this.app.set('port', this.port);
 
     this.server = http.createServer(this.app);
     this.server.listen(this.port);
@@ -67,9 +72,10 @@ class WebhookServer {
     if (req.body.action && req.body.action.data) {
       data = req.body.action.data;
       type = req.body.action.type;
-      debug(`webhook :: ${type}`)
 
       if (type === 'updateCard') {
+        debug(`handleAction -- updateCard`);
+
         Update.getCard(data.card.id)
         .then(card => {
           if (card.labels.some(c => c.color === 'green'))
@@ -77,11 +83,14 @@ class WebhookServer {
         });
       }
       else if (type === 'updateList') {
+        debug(`handleAction -- updateList`);
+
         if (data.old && data.old.hasOwnProperty('name'))
           eventEmit.emit('WEBHOOK_UPDATE');
       }
       else if ( (type === 'addLabelToCard' || type === 'removeLabelFromCard')
                 && data.value === 'green') {
+        debug(`handleAction -- updateLabel`);
         eventEmit.emit('WEBHOOK_UPDATE');
       }
     }

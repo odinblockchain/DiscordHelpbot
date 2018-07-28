@@ -28,13 +28,13 @@
 
 
   Discord Channel Types:
-   - dm: a DM channel
-   - group: a Group DM channel
-   - text: a guild text channel
-   - voice: a guild voice channel
-   - category: a guild category channel
+   - dm       : a DM channel
+   - group    : a Group DM channel
+   - text     : a guild text channel
+   - voice    : a guild voice channel
+   - category : a guild category channel
 */
-global.__basedir          = __dirname;
+global.__basedir = __dirname;
 
 process.on('unhandledRejection', error => {
   // Will print "unhandledRejection err is not defined"
@@ -43,7 +43,7 @@ process.on('unhandledRejection', error => {
 
 /*  Libraries
 */
-const Discord   = require("discord.js");
+const Discord   = require('discord.js');
 const Db        = require('./lib/sublevel');
 const Level     = require('./lib/sublevel');
 const Update    = require('./update');
@@ -66,8 +66,10 @@ let supportLists  = [],
     supportCards  = [],
     supportTopics = [];
 
-let greetMember = (member) => {
-  return `Welcome to the server, ${member}! If you have any questions, please head over to the <#435508837844254750> channel and I'll do my best to help! Simply type \`!ask your question\``;
+let greetMember = (member, supportChannels) => {
+  supportChannels = supportChannels.map(id => `<#${id}>`).join(' --- ');
+
+  return `Welcome fellow traveler ${member}, to the ODIN Discord Community! If you have any questions, i'll be available in these channels to help! ${supportChannels}\nSimply type \`${config.prefix}ask your_question_here\` OR \`${config.prefix}help\` in either of those channels.`
 }
 
 let getAllowedChannels = () => {
@@ -76,8 +78,11 @@ let getAllowedChannels = () => {
 }
 
 let isAllowedChannel = (channelName) => {
-  let regFind = new RegExp(`^${channelName}$`, 'i');
-  return (regFind.test(config.primaryChannel));
+  console.log('isallowed?', channelName);
+  let regFind = new RegExp(`${config['primaryChannelMatch']}`, 'i');
+  return channelName.match(regFind);
+  // console.log(channelName.match(regFind));
+  // return (regFind.test(config.primaryChannel));
 };
 
 let isIgnoredList = (listName) => {
@@ -95,7 +100,7 @@ let isPrimaryTopic = (card) => {
 }
 
 let buildSupportLists = () => {
-  debug('[DiscordHelpbot] buildSupportLists');
+  debug('buildSupportLists');
 
   supportLists  = [];
   supportCards  = [];
@@ -106,7 +111,7 @@ let buildSupportLists = () => {
     let List = listData.value;
 
     if (!isIgnoredList(List.name)) {
-      debug(`[DiscordHelpbot] buildSupportLists :: add Support List :: ${List.name}`);
+      debug(`buildSupportLists :: add Support List :: ${List.name}`);
       supportLists.push({
         name: List.name,
         id: List.id,
@@ -123,7 +128,7 @@ let buildSupportLists = () => {
       let Card = cardData.value;
 
       if (isPrimaryTopic(Card)) {
-        debug(`[DiscordHelpbot] buildSupportLists :: add Keyword Topic :: ${Card.question}`);
+        debug(`buildSupportLists :: add Keyword Topic :: ${Card.question}`);
         supportTopics.push(Card);
       }
       else {
@@ -132,16 +137,16 @@ let buildSupportLists = () => {
         if (matchingListIndex !== -1) {
           supportLists[matchingListIndex].cards.push(Card);
           supportCards.push({
-            id: Card.id,
-            listLabel: Card.boardName,
-            shortId: Card.shortLink,
-            question: Card.question,
-            answer: Card.answer,
-            shortUrl: Card.shortUrl
+            id:         Card.id,
+            listLabel:  Card.boardName,
+            shortId:    Card.shortLink,
+            question:   Card.question,
+            answer:     Card.answer,
+            shortUrl:   Card.shortUrl
           });
         }
         else {
-          debug(`!! Could not find matching supportList for ${Card.question} -- ${Card.id}`);
+          debug(`!No matching supportList for ${Card.question} -- ${Card.id}`);
         }
       }
     })
@@ -282,6 +287,9 @@ function createEmbedList(title, list) {
 
 function createEmbedAnswer(faqCard) {
   let helpbotAvatar = 'https://odn-platform.nyc3.digitaloceanspaces.com/odin--image--explorer.jpg';
+  
+  // let commentLink = `\n\n[Leave a comment on Trello](${faqCard.shortUrl})`;
+  let commentLink = '';
 
   let embed = new Discord.RichEmbed({
     'author': {
@@ -289,7 +297,7 @@ function createEmbedAnswer(faqCard) {
       'icon_url': helpbotAvatar
     },
     'color': 8426988,
-    'description': `${faqCard.answer}\n\n[Leave a comment on Trello](${faqCard.shortUrl})`,
+    'description': `${faqCard.answer}${commentLink}`,
     'url': faqCard.shortUrl,
     'thumbnail': {
       'url': helpbotAvatar
@@ -300,7 +308,6 @@ function createEmbedAnswer(faqCard) {
   });
 
   // embed.attachFile(faqCard.id);
-
   return embed;
 }
 
@@ -335,7 +342,7 @@ function createEmbedHelpPost() {
       'icon_url': helpbotAvatar
     },
     'color': 8426988,
-    'description': `**Ask a Question**\n\`!ask _question_\`\n\n**View Top Questions**\n\`!top\`\n\n**View All Support Categories**\n\`!lists\`\n\n**View Support Category Questions**\n\`!list _category_\`\n\n**Support Topics**\n${primaryTopics}`,
+    'description': `**Ask a Question**\n\`${config.prefix}ask _question_\`\n\n**View Top Questions**\n\`${config.prefix}top\`\n\n**View All Support Categories**\n\`${config.prefix}lists\`\n\n**View Support Category Questions**\n\`${config.prefix}list _category_\`\n\n**Support Topics**\n${primaryTopics}`,
     'thumbnail': {
       'url': helpbotAvatar
     }
@@ -363,27 +370,98 @@ function createEmbedTopList(supportCards) {
   });
 }
 
+function findGuildChannel(guildName, channelName) {
+  debug(`findGuildChannel [${guildName}] [${channelName}`);
+  
+  return Client.guilds.find(guild => guild.name.toLowerCase() === guildName.toLowerCase())
+  .channels.find(channel => channel.name.toLowerCase() === channelName.toLowerCase());
+}
 
+function sendMessageToGuildChannel(guildName, channelName, message) {
+  debug(`sendMessageToGuildChannel [${guildName}] [${channelName}`);
+
+  let channel = findGuildChannel(guildName, channelName);
+  if (!channel) {
+    debug('channel not found!');
+    return false;
+  }
+
+  channel.send(message);
+}
+
+// 472740259554131969
 // This event will run if the bot starts, and logs in, successfully
 Client.on("ready", () => {
+  let package = require('./package.json');
+
   console.log(`Bot has started, with ${Client.users.size} users, in ${Client.channels.size} channels of ${Client.guilds.size} guilds.`);
 
-  Client.user.setActivity(`Helper Bot 2.0`);
+  let guilds = {};
+  Client.guilds.map((guild) => {
+    guilds[guild.name] = {
+      id: guild.id,
+      members: guild.memberCount,
+      channels: {}
+    };
+
+    guild.channels.map((channel) => {
+      guilds[guild.name].channels[channel.name] = {
+        id: channel.id,
+        type: channel.type
+      };
+
+      if (channel.type !== 'category')
+        guilds[guild.name].channels[channel.name].parent = (channel.parent) ? channel.parent.name : 'no_parent';
+    });
+  });
+
+  let channels = {};
+  Client.channels.map((channel) => {
+    channels[channel.id];
+  });
+
+
+
+  let util = require('util');
+  console.log(util.inspect(channels, false, null));
+
+  // sendMessageToGuildChannel('bufferzone', 'support', 'hello');
+
+  Client.user.setActivity(`HelpBot ${package.version}`);
   buildSupportLists();
 });
 
 // This event triggers when the bot joins a server
 Client.on("guildCreate", guild => {
+  let package = require('./package.json');
   console.log(`New guild joined: ${guild.name} (id: ${guild.id}). This guild has ${guild.memberCount} members.`);
 
+  let regFind = new RegExp(`${config['primaryChannelMatch']}`, 'i');
   let channels = guild.channels.array();
+  let supportChannels = [];
+  let primaryChannel = null;
+
   for (let channel of channels) {
-    if (channel.name === 'general') {
-      channel.send('beep-boop -- Glad to be around everyone! Please type \`!help\` if you have a question!');
+    
+    // console.log('channel', {
+    //   type: channel.type,
+    //   id: channel.id,
+    //   name: channel.name,
+    //   match: channel.name.match(regFind)
+    // });
+
+    if (channel.type === 'text' && channel.name.match(regFind)) {
+      supportChannels.push(channel.id);
+    }
+
+    if (channel.name === 'general' && channel.type === 'text' && primaryChannel === null) {
+      primaryChannel = channel;
     }
   }
 
-  Client.user.setActivity(`Helper Bot 2.0`);
+  primaryChannel.send(`beep-boop -- Greetings fellow settlers! If you have any questions, please head over to any of these channels:\n${supportChannels.map(id => `<#${id}>`).join('\n')}\n\nI'll do my best to help answer questions around here! Simply type \`${config.prefix}ask your_question_here\` or \`${config.prefix}help\``);
+
+  Client.user.setActivity(`HelpBot ${package.version}`);
 });
 
 // this event triggers when the bot is removed from a guild
@@ -394,12 +472,37 @@ Client.on("guildDelete", guild => {
 // Create an event listener for new guild members
 // Send the message to a designated channel on a server:
 Client.on('guildMemberAdd', member => {
-  const channel = member.guild.channels.find('name', 'welcome');
-  if (!channel) return;
+  // const channel = member.guild.channels.find('name', 'general');
+  // if (!channel) return;
+
+  let regFind = new RegExp(`${config['primaryChannelMatch']}`, 'i');
+  let channels =  member.guild.channels.array();
+  let supportChannels = [];
+  let primaryChannel = null;
+
+  for (let channel of channels) {
+    
+    // console.log('channel', {
+    //   type: channel.type,
+    //   id: channel.id,
+    //   name: channel.name,
+    //   match: channel.name.match(regFind)
+    // });
+    if (channel.type === 'text' && channel.name.match(regFind)) {
+      supportChannels.push(channel.id);
+    }
+
+    if (channel.name === 'general' && channel.type === 'text' && primaryChannel === null) {
+      primaryChannel = channel;
+    }
+  }
+
+  primaryChannel.send(greetMember(member, supportChannels));
+
 
   // Send the message, mentioning the member
   // channel.send(greetMember(member));
-  member.send(createEmbedGreeting(member.user));
+  // member.send(createEmbedGreeting(member.user));
   // member.send(greetMember(member))
   // .then(message => {
   //   console.log(`Sent welcome message to ${member.displayName}`);
@@ -425,9 +528,6 @@ Client.on("message", async message => {
   // Ignore messages without prefix
   if (message.content[0] !== config.prefix) return;
 
-  // Ignore messages sent from unapproved channels
-  if (!isAllowedChannel(message.channel.name)) return;
-
   let args    = message.content.slice(config.prefix.length).trim().split(/ +/g);
   let command = args.shift().toLowerCase();
 
@@ -440,14 +540,23 @@ Client.on("message", async message => {
 
   // Let user know they don't need to include any underscores
   if (args.join(' ')[0] === '_') {
-    message.channel.send(`${message.author} -- FYI, you don't need to include an underscore when giving me a command. That was just for an example 😉`);
-    args = args.map(arg => arg.replace(/_/g, ''));
+    // Ignore messages sent from unapproved channels
+    if (isAllowedChannel(message.channel.name)) {
+      message.channel.send(`${message.author} -- *FYI, you don't need to include an underscore when giving me a command. That was just for an example* 😉`);
+      args = args.map(arg => arg.replace(/_/g, ''));
+    }
   }
 
   if (command === 'help') {
+    // Ignore messages sent from unapproved channels
+    if (!isAllowedChannel(message.channel.name)) return;
+
     message.channel.send(createEmbedHelpPost());
   }
   else if (command === 'ask') {
+    // Ignore messages sent from unapproved channels
+    if (!isAllowedChannel(message.channel.name)) return;
+    
     Fuzz = Fuzzyset(supportCards.map(card => card.question));
     possibleAnswers = Fuzz.get(args.join(' ')) || '';
 
@@ -468,30 +577,39 @@ Client.on("message", async message => {
     }
   }
   else if (command === 'lists') {
+    // Ignore messages sent from unapproved channels
+    if (!isAllowedChannel(message.channel.name)) return;
+
     debug('[DiscordHelpbot] :: Show all category lists');
 
     let availableLists = supportLists.filter(list => list.cards.length > 0);
     message.channel.send(createEmbedList(
       `Available Help/Support Topics:`,
-      availableLists.map(list => `\`!list ${list.name}\``)
+      availableLists.map(list => `\`${config.prefix}list ${list.name}\``)
     ));
   }
   else if (command === 'list') {
+    // Ignore messages sent from unapproved channels
+    if (!isAllowedChannel(message.channel.name)) return;
+
     debug('[DiscordHelpbot] :: Show questions in category list');
 
     let supportList = supportLists.find(list => list.name.toLowerCase() === args.join(' ').toLowerCase());
     if (supportList) {
       message.channel.send(createEmbedList(
         `${supportList.name} Sub-topics:`,
-        supportList.cards.map(card => `\`!ask ${card.question}\``)
+        supportList.cards.map(card => `\`${config.prefix}ask ${card.question}\``)
       ));
     }
     else {
-      message.channel.send('Unable to find a matching support category! Use the command `!lists` to view all available support categories.');
+      message.channel.send(`Unable to find a matching support category! Use the command \`${config.prefix}lists\` to view all available support categories.`);
     }
   }
   else if (command === 'top') {
-    debug('[DiscordHelpbot] :: List top questions');
+    // Ignore messages sent from unapproved channels
+    if (!isAllowedChannel(message.channel.name)) return;
+
+    debug('[DiscordHelpbot] :: List top-rated questions');
 
     let cards = [];
     Level.SupportCards.createReadStream()
@@ -505,6 +623,12 @@ Client.on("message", async message => {
     });
   }
   else if (command === 'purge') {
+    // Ignore messages sent from unapproved channels
+    if (!isAllowedChannel(message.channel.name)) return;
+    if (message.author.id !== config.admin) return;
+
+    message.channel.send('🔥 🔥 🔥');
+
     Update.updateSupportLists(Level)
     .then(status => {
       setTimeout(() => {
@@ -512,6 +636,7 @@ Client.on("message", async message => {
         .then(u => {
           setTimeout(() => {
             buildSupportLists();
+            message.channel.send('Purge Complete. Support List rebuilding.');
           }, 3000);
         })
         .catch(err => console.log(err));
@@ -531,7 +656,7 @@ Client.on("message", async message => {
 });
 
 
-Client.login(config.token);
+Client.login(config['integrations']['discord']['token']);
 WebhookServer.init();
 
 Update.eventEmit.on('UPDATE_SUPPORT_LIST_COMPLETE', () => {
@@ -573,10 +698,12 @@ function handleErrorOrSignal(err) {
     console.error('Error occurred:', err);
     console.error(err.stack);
   }
-  if (! closing) {
-    console.log('Shutting down server...');
-    process.exit(1);
-  }
+
+  process.exit(1);
+  // if (!closing) {
+  //   console.log('Shutting down server...');
+  //   process.exit(1);
+  // }
 }
 
 process.on('SIGTERM', handleErrorOrSignal)

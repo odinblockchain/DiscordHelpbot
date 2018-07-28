@@ -6,19 +6,22 @@ const EventEmitter  = require('events');
 
 /*  Debug
 */
-let debug = require('debug')('helpbot:webhook');
+let debug = require('debug')('helpbot:update');
 
 /*  Core
 */
 const config    = require('./config.json');
 const eventEmit = new EventEmitter();
-
 const IgnoreLists = [
   'aim',
   'to be sorted'
 ];
-
 const ReadyLabelColor = 'green';
+
+const TrelloClientKey = config['integrations']['trello']['api']['key'];
+const TrelloClientToken = config['integrations']['trello']['api']['token'];
+const TrelloFAQBoard = config['integrations']['trello']['board'];
+const TrelloFAQOrganization = config['integrations']['trello']['board'];
 
 function UTCNow() {
   return moment().utc();
@@ -46,8 +49,8 @@ function removeIgnoredLists(listCollection) {
 
 async function getCard(cardId) {
   const TrelloClient = new Trello.Client({
-    client_key: config['client_key'],
-    client_token: config['client_token']
+    client_key:   TrelloClientKey,
+    client_token: TrelloClientToken
   });
 
   return new Promise((resolve, reject) => {
@@ -64,7 +67,7 @@ async function getCard(cardId) {
 
 async function getBoards() {
   return new Promise((resolve, reject) => {
-    client.Organizations.getBoards(config['faqOrganization'])
+    client.Organizations.getBoards(TrelloFAQOrganization)
     .then((boards) => {
       boards.forEach(board => debug(`getBoard >> ${board.name}\n${board.id}\n`));
 
@@ -177,12 +180,12 @@ let UpdateSupportLists = (Db) => {
   debug('updateSupportLists');
 
   const TrelloClient = new Trello.Client({
-    client_key: config['client_key'],
-    client_token: config['client_token']
+    client_key: TrelloClientKey,
+    client_token: TrelloClientToken
   });
 
   return new Promise((resolveUpdate, rejectUpdate) => {
-    TrelloClient.Boards.getLists(config['faqBoard'])
+    TrelloClient.Boards.getLists(TrelloFAQBoard)
     .then(Lists => {
 
       Lists = removeIgnoredLists(Lists);
@@ -249,8 +252,8 @@ let UpdateSupportCards = (Db) => {
   };
 
   const TrelloClient = new Trello.Client({
-    client_key: config['client_key'],
-    client_token: config['client_token']
+    client_key: TrelloClientKey,
+    client_token: TrelloClientToken
   });
 
   return new Promise((resolveUpdate, rejectUpdate) => {
