@@ -314,13 +314,16 @@ function createEmbedAnswer(faqCard) {
 function createEmbedPost(faqCard) {
   let helpbotAvatar = 'https://odn-platform.nyc3.digitaloceanspaces.com/odin--image--explorer.jpg';
 
+  // let commentLink = `\n\n[Leave a comment on Trello](${faqCard.shortUrl})`;
+  let commentLink = '';
+
   return new Discord.RichEmbed({
     'author': {
       'name': faqCard.question,
       'icon_url': helpbotAvatar
     },
     'color': 8426988,
-    'description': `${faqCard.answer}\n\n[Leave a comment on Trello](${faqCard.shortUrl})`,
+    'description': `${faqCard.answer}${commentLink}`,
     'url': faqCard.shortUrl,
     'thumbnail': {
       'url': helpbotAvatar
