@@ -538,6 +538,9 @@ Client.on("message", async message => {
   `args:\t\t${args}\n` +
   `~~~~~~\n`);
 
+  // ignore if only the prefix was posted
+  if (command.trim() === '' || command.length === 0) return;
+
   // Let user know they don't need to include any underscores
   if (args.join(' ')[0] === '_') {
     // Ignore messages sent from unapproved channels
