@@ -564,11 +564,11 @@ Client.on("message", async message => {
     if (!isAllowedChannel(message.channel.name)) return;
     
     Fuzz = Fuzzyset(supportCards.map(card => card.question));
-    possibleAnswers = Fuzz.get(args.join(' ')) || '';
-
-    debug(`[DiscordHelpbot] :: Ask question\nQuestion:\n${args.join(' ')}\n\nPossible Matches:\n${possibleAnswers.map(answer => `> ${answer[1]} (${(answer[0]*100).toFixed(2)}%)`).join('\n')}\n\n`);
+    possibleAnswers = Fuzz.get(args.join(' ')) || [];
 
     if (possibleAnswers.length) {
+      debug(`[DiscordHelpbot] :: Ask question\nQuestion:\n${args.join(' ')}\n\nPossible Matches:\n${possibleAnswers.map(answer => `> ${answer[1]} (${(answer[0]*100).toFixed(2)}%)`).join('\n')}\n\n`);
+
       let suggestion = supportCards.find(card => card.question === possibleAnswers[0][1]);
 
       message.reply('I found this related question!');
@@ -579,6 +579,8 @@ Client.on("message", async message => {
       });
     }
     else {
+      debug(`[DiscordHelpbot] :: Ask question\nQuestion:\n${args.join(' ')}\n\nPossible Matches:\n NONE\n\n`);
+
       message.channel.send(`I couldn't find a related question unfortunately. Please reach out to one of our Community Moderators!`);
     }
   }
